@@ -240,6 +240,11 @@ class LocalBrain {
     if (colon > 0 && colon < 60) {
       title = content.substring(0, colon).trim();
       rest = content.substring(colon + 1).trim();
+    } else if (content.contains(',')) {
+      // "weekend trip, charger, passport" -> title "Weekend trip" with a checklist.
+      final comma = content.indexOf(',');
+      title = content.substring(0, comma).trim();
+      rest = content.substring(comma + 1).trim();
     } else {
       title = content.length <= 60 ? content : '${content.substring(0, 57)}…';
       rest = content.length <= 60 ? '' : content;
@@ -248,7 +253,7 @@ class LocalBrain {
     final blocks = <Block>[];
     if (rest.isNotEmpty) {
       final items = rest.split(RegExp(r',|\n')).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-      if (items.length > 1) {
+      if (items.length > 1 || content.contains(',')) {
         for (final i in items) {
           blocks.add(Block(type: BlockType.checklist, text: _cap(i)));
         }
