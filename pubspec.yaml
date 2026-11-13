@@ -1,0 +1,33 @@
+name: life_os
+description: "Notes, focus and money in one calm, offline-first life system."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  hive_ce: '>=2.6.0 <3.0.0'
+  hive_ce_flutter: '>=2.1.0 <3.0.0'
+  file_picker: '>=11.0.0 <12.0.0'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: '>=4.0.0 <7.0.0'
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: InterTight
+      fonts:
+        - asset: assets/fonts/InterTight.ttf
+    - family: Doto
+      fonts:
+        - asset: assets/fonts/Doto.ttf
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono.ttf
