@@ -167,13 +167,13 @@ class MoneyScreen extends StatelessWidget {
                     onTap: () => showAccountEditor(context),
                     label: 'Add account',
                     child: Container(
-                      width: 104,
+                      width: 116,
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(Radii.l), border: Border.all(color: p.line, width: 1.5)),
                       padding: const EdgeInsets.all(14),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Icon(AppIcons.add, size: 18, color: p.ink),
                         const Spacer(),
-                        Text('Add account', style: AppText.sans(13.5, weight: FontWeight.w600, color: p.ink)),
+                        Text('Add account', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.sans(13.5, weight: FontWeight.w600, color: p.ink)),
                       ]),
                     ),
                   ),

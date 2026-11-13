@@ -332,7 +332,10 @@ class _KindSwitch extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(txnIcon(k), size: 14, color: k == value ? p.onAccent : p.ink),
                   const SizedBox(width: 5),
-                  Text(k.label, style: AppText.sans(13.5, weight: FontWeight.w600, color: k == value ? p.onAccent : p.ink)),
+                  Flexible(
+                    child: Text(k.label,
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(13.5, weight: FontWeight.w600, color: k == value ? p.onAccent : p.ink)),
+                  ),
                 ]),
               ),
             ),

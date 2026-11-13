@@ -253,7 +253,7 @@ class MoneyChip extends StatelessWidget {
         decoration: BoxDecoration(color: selected ? p.accent : p.soft, borderRadius: BorderRadius.circular(18)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           if (icon != null) ...[Icon(icon, size: 15, color: fg), const SizedBox(width: 6)],
-          Text(label, style: AppText.sans(13.5, weight: FontWeight.w500, color: fg)),
+          Text(label, maxLines: 1, style: AppText.sans(13.5, weight: FontWeight.w500, color: fg)),
         ]),
       ),
     );
@@ -286,9 +286,10 @@ class MoneyButton extends StatelessWidget {
           height: height,
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(height / 2)),
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[Icon(icon, size: 18, color: fg), const SizedBox(width: 8)],
-            Text(label, style: AppText.sans(15.5, weight: FontWeight.w600, color: fg)),
+            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(15.5, weight: FontWeight.w600, color: fg))),
           ]),
         ),
       ),

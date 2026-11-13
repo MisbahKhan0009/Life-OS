@@ -36,10 +36,10 @@ class GoalStrip extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               IconTile(icon: AppIcons.add, size: 34),
               const Spacer(),
-              Text(goals.isEmpty ? 'Start a goal' : 'New goal', style: AppText.sans(15, weight: FontWeight.w600, color: p.ink)),
+              Text(goals.isEmpty ? 'Start a goal' : 'New goal', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.sans(15, weight: FontWeight.w600, color: p.ink)),
               if (goals.isEmpty) ...[
                 const SizedBox(height: 2),
-                Text('Emergency fund, laptop, a trip', style: AppText.sans(12.5, color: p.muted)),
+                Text('Emergency fund, laptop, a trip', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.sans(12.5, color: p.muted)),
               ],
             ]),
           ),
