@@ -4,15 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_os/app.dart';
 import 'package:life_os/data/models.dart';
+import 'package:life_os/data/money_store.dart';
 import 'package:life_os/data/store.dart';
+import 'package:life_os/ui/widgets.dart';
 
 void main() {
   late NoteStore store;
+  late MoneyStore money;
   late Directory dir;
 
   setUpAll(() async {
     dir = await Directory.systemTemp.createTemp('life_os_test');
     store = await NoteStore.openForTest(dir.path);
+    money = await MoneyStore.openForTest(dir.path, suffix: 'widget');
   });
 
   tearDownAll(() async {
@@ -42,9 +46,29 @@ void main() {
 
   testWidgets('home shows the notes title and pinned note', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 900));
-    await tester.pumpWidget(LifeOsApp(store: store));
+    await tester.pumpWidget(LifeOsApp(store: store, money: money));
     await tester.pump();
     expect(find.text('Notes'), findsWidgets);
     expect(find.text('Welcome to Life OS'), findsOneWidget);
+  });
+
+  testWidgets('money tab shows the Global deposit and opens the add sheet', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 900));
+    await tester.pumpWidget(LifeOsApp(store: store, money: money));
+    await tester.pump();
+    await tester.tap(find.byIcon(AppIcons.money));
+    await tester.pumpAndSettle();
+    expect(find.text('GLOBAL DEPOSIT'), findsOneWidget);
+    await tester.tap(find.text('Expense').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Enter an amount'), findsOneWidget);
+    for (final k in ['1', '2', '5']) {
+      await tester.tap(find.text(k).last);
+      await tester.pump();
+    }
+    expect(find.text('Save expense'), findsOneWidget);
+    await tester.tap(find.text('Save expense'));
+    await tester.pumpAndSettle();
+    expect(money.spent(DateTime.now()), 12500);
   });
 }

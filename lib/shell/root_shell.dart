@@ -5,7 +5,9 @@ import '../features/editor/editor_screen.dart';
 import '../features/focus/focus_screen.dart';
 import '../features/folders/folders_screen.dart';
 import '../features/home/home_screen.dart';
+import '../data/money_models.dart';
 import '../features/money/money_screen.dart';
+import '../features/money/txn_sheet.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import '../ui/widgets.dart';
@@ -88,7 +90,12 @@ class _RootShellState extends State<RootShell> {
                       index: _tab,
                       money: moneyTab,
                       onSelect: (i) => setState(() => _tab = i),
-                      onAdd: focusTab ? null : () => createAndOpenNote(context),
+                      addLabel: moneyTab ? 'Add transaction' : 'New note',
+                      onAdd: focusTab
+                          ? null
+                          : moneyTab
+                              ? () => showTxnSheet(context, kind: TxnKind.expense)
+                              : () => createAndOpenNote(context),
                     ),
                   ),
                 ),
@@ -102,12 +109,13 @@ class _RootShellState extends State<RootShell> {
 }
 
 class _NavBar extends StatelessWidget {
-  const _NavBar({required this.index, required this.onSelect, required this.money, this.onAdd});
+  const _NavBar({required this.index, required this.onSelect, required this.money, this.onAdd, this.addLabel = 'New note'});
 
   final int index;
   final bool money;
   final ValueChanged<int> onSelect;
   final VoidCallback? onAdd;
+  final String addLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +153,7 @@ class _NavBar extends StatelessWidget {
           const SizedBox(width: 10),
           Pressable(
             onTap: onAdd,
-            label: 'New note',
+            label: addLabel,
             child: Container(
               width: 62,
               height: 62,

@@ -54,22 +54,43 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
-      - name: Build Android APK
+      # Release APKs are signed with the debug key. With the ANDROID_DEBUG_KEYSTORE secret
+      # (a base64 debug.keystore) every build shares one signature, so new builds install
+      # over old ones and keep your data. Without it each run makes a fresh key.
+      - name: Use the stable signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
         run: |
-          flutter build apk --release
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Life-OS.apk
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            echo "Stable signing key in place"
+          else
+            echo "No ANDROID_DEBUG_KEYSTORE secret, using a fresh debug key"
+          fi
+
+      # One APK per chip type keeps each download small (about a third of a universal APK).
+      - name: Build Android APKs
+        run: |
+          flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64
+          cd build/app/outputs/flutter-apk
+          cp app-arm64-v8a-release.apk Life-OS-arm64.apk
+          cp app-armeabi-v7a-release.apk Life-OS-armv7.apk
+          ls -la *.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: life-os-android-apk
-          path: build/app/outputs/flutter-apk/Life-OS.apk
+          path: |
+            build/app/outputs/flutter-apk/Life-OS-arm64.apk
+            build/app/outputs/flutter-apk/Life-OS-armv7.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: life-os-web
           path: build/web
 
-      # Every push to main becomes a release, so the latest APK is always at
+      # Every push to main becomes a release, so the latest APKs are always at
       # https://github.com/MisbahKhan0009/Life-OS/releases/latest
       - name: Publish release with the APK
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -79,7 +100,12 @@ jobs:
           name: Life OS build ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           make_latest: true
-          files: build/app/outputs/flutter-apk/Life-OS.apk
+          files: |
+            build/app/outputs/flutter-apk/Life-OS-arm64.apk
+            build/app/outputs/flutter-apk/Life-OS-armv7.apk
           body: |
-            Android APK for commit ${{ github.sha }}.
-            To install: open this page on your phone, download Life-OS.apk and allow installs from your browser when asked.
+            Android build for commit ${{ github.sha }}.
+            Most phones from the last several years: download Life-OS-arm64.apk.
+            Older or budget phones that refuse it: use Life-OS-armv7.apk.
+            Open this page on your phone, download the APK and allow installs from your browser when asked.
+            If Android says it conflicts with the installed app, uninstall the old build once first.

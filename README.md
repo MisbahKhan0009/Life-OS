@@ -16,9 +16,18 @@ Built with Flutter for Android, iOS, web, Windows, macOS and Linux.
 - Light, dark and system themes
 - Everything stored offline on the device (Hive)
 
-**Shells for the next builds**
-- Focus: a working Pomodoro timer (15, 25, 50 or 90 minutes, rounds and breaks) in the dot-matrix design
-- Money: the Global deposit card and what is coming
+**Money hub**
+- Global deposit: every account you mark to count in it, added up as your total savings, plus net worth
+- Expense and Deposit in two taps, with a keypad that also does sums (120+45×2), categories, note and date. Transfers move money between your own accounts
+- Accounts: cash, bank, mobile wallet, savings, DPS, FDR, credit card, investment. Balances update from opening balance and activity; accounts with history archive instead of deleting
+- Monthly budget with safe to spend today, plus per-category limits
+- Dot-matrix spending chart, day by day against the daily budget, and a "where it went" breakdown
+- Goals with progress, add or take out money, and how much to put aside each month to hit a date
+- All activity by month with filters and search; tap any entry to edit or delete (with undo)
+- Hide balances with one tap. Taka amounts use lakh and crore grouping (12,34,567)
+
+**Focus**
+- A working Pomodoro timer (15, 25, 50 or 90 minutes, rounds and breaks) in the dot-matrix design
 
 The full feature plan, mood board and screen designs live in Claude artifacts (Note App Feature Plan, the mood board and Life OS App Design).
 
@@ -36,13 +45,15 @@ flutter run
 
 ## CI
 
-Every push runs `.github/workflows/ci.yml`: analyze, tests, a web build and an Android APK. Download the APK from the run's **Artifacts** section (`life-os-android-apk`).
+Every push runs `.github/workflows/ci.yml`: analyze, tests, a web build and Android APKs, one per chip type. Each push to `main` publishes a release with `Life-OS-arm64.apk` (most phones) and `Life-OS-armv7.apk` (older phones) at [Releases](https://github.com/MisbahKhan0009/Life-OS/releases/latest).
+
+To keep one signature across builds (so updates install over the old app and keep your data), add a repository secret `ANDROID_DEBUG_KEYSTORE` holding a base64-encoded debug keystore (alias `androiddebugkey`, passwords `android`).
 
 ## Structure
 
 ```
 lib/
-  data/       models, Hive store, Markdown conversion, date formatting
+  data/       models and Hive stores (notes, money), Markdown, date and taka formatting
   theme/      colour tokens (core and Money), typography, ThemeData
   ui/         grain texture and gradient art, glass, buttons, sheets
   shell/      tabs and the floating glass nav bar
@@ -52,8 +63,8 @@ assets/fonts/ Doto, Inter Tight, Geist Mono (SIL Open Font License)
 
 ## Roadmap
 
-1. Notes core (this build)
-2. Money hub: Expense and Deposit, Global deposit, accounts, budgets, goals, spending chart
+1. Notes core
+2. Money hub (this build)
 3. Focus: sessions linked to notes and tasks, stats, streaks, ambient sound
 4. Tasks and Today, reminders, widgets
 5. Databases and views, sync, collaboration
