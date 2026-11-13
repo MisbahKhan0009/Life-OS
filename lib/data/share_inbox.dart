@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'link_preview.dart';
 import 'models.dart';
 import 'store.dart';
 
@@ -100,7 +101,12 @@ class ShareInbox {
           subject: (m['subject'] as String?) ?? '',
           note: (m['note'] as String?) ?? '',
         );
-        store.createNote(folderId: folderId, title: shared.title, blocks: shared.blocks);
+        final note = store.createNote(folderId: folderId, title: shared.title, blocks: shared.blocks);
+        final url = firstUrl((m['text'] as String?) ?? '');
+        if (url != null) {
+          // Fetch the page's own title, description and image in the background.
+          LinkEnricher.enqueue(store, note.id, url, shared.title.startsWith('Link from ') ? shared.title : '\u0000');
+        }
         n++;
       } catch (_) {
         // A broken file is skipped and removed so it doesn't block the rest.

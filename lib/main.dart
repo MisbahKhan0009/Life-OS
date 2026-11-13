@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app.dart';
 import 'data/focus_engine.dart';
 import 'data/focus_store.dart';
+import 'data/link_preview.dart';
 import 'data/money_store.dart';
 import 'data/share_inbox.dart';
 import 'data/store.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
   focusAudio = FocusAudio(focus);
   focusMusic = FocusMusic(focus)..attach();
   shareInbox = await ShareInbox.open();
+  linkEnricher = LinkEnricher(store)..backfill();
   final inbox = shareInbox;
   if (inbox != null) {
     inbox.writeFolders(store.folders);

@@ -7,6 +7,7 @@ import '../features/focus/focus_sheets.dart';
 import '../features/folders/folders_screen.dart';
 import '../features/home/home_screen.dart';
 import '../data/money_models.dart';
+import '../data/link_preview.dart';
 import '../data/share_inbox.dart';
 import '../features/money/money_screen.dart';
 import '../features/money/txn_sheet.dart';
@@ -69,9 +70,14 @@ class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
   /// Notes saved from the share menu while the app was in the background.
   void _importShares() {
     final inbox = shareInbox;
-    if (inbox == null || !mounted) return;
+    if (inbox == null || !mounted) {
+      linkEnricher?.run();
+      return;
+    }
     final n = inbox.importInto(StoreScope.read(context));
     if (n > 0) showToast(context, n == 1 ? 'Saved 1 note from share' : 'Saved $n notes from share');
+    // Real titles and previews for shared links, quietly in the background.
+    linkEnricher?.run();
   }
 
   @override

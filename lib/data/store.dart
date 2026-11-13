@@ -70,6 +70,19 @@ class NoteStore extends ChangeNotifier {
 
   // ---------- settings ----------
 
+  /// Shared links waiting for their preview (title, description, image) to be fetched.
+  /// Each is {noteId, url, autoTitle, tries}.
+  List<Map<String, dynamic>> get pendingLinks {
+    final raw = _settings.get('pendingLinks');
+    if (raw is! List) return [];
+    return [for (final m in raw) if (m is Map) m.cast<String, dynamic>()];
+  }
+
+  set pendingLinks(List<Map<String, dynamic>> v) => _settings.put('pendingLinks', v);
+
+  bool get linksBackfilled => _settings.get('linksBackfilled') == true;
+  set linksBackfilled(bool v) => _settings.put('linksBackfilled', v);
+
   ThemeMode get themeMode => switch (_settings.get('theme')) {
         'light' => ThemeMode.light,
         'dark' => ThemeMode.dark,
