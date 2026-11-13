@@ -38,6 +38,9 @@ class ContentWidth extends StatelessWidget {
   }
 }
 
+/// The selected tab. Other screens can switch tabs by setting it (2 is Focus).
+final shellTab = ValueNotifier<int>(0);
+
 class RootShell extends StatefulWidget {
   const RootShell({super.key});
 
@@ -46,7 +49,21 @@ class RootShell extends StatefulWidget {
 }
 
 class _RootShellState extends State<RootShell> {
-  int _tab = 0;
+  int get _tab => shellTab.value;
+
+  @override
+  void initState() {
+    super.initState();
+    shellTab.addListener(_onTab);
+  }
+
+  @override
+  void dispose() {
+    shellTab.removeListener(_onTab);
+    super.dispose();
+  }
+
+  void _onTab() => setState(() {});
 
   static const _tabs = [
     (AppIcons.notes, 'Notes'),
@@ -89,7 +106,7 @@ class _RootShellState extends State<RootShell> {
                     child: _NavBar(
                       index: _tab,
                       money: moneyTab,
-                      onSelect: (i) => setState(() => _tab = i),
+                      onSelect: (i) => shellTab.value = i,
                       addLabel: moneyTab ? 'Add transaction' : 'New note',
                       onAdd: focusTab
                           ? null

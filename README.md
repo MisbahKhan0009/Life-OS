@@ -27,7 +27,15 @@ Built with Flutter for Android, iOS, web, Windows, macOS and Linux.
 - Hide balances with one tap. Taka amounts use lakh and crore grouping (12,34,567)
 
 **Focus**
-- A working Pomodoro timer (15, 25, 50 or 90 minutes, rounds and breaks) in the dot-matrix design
+- Pomodoro with presets (Classic 25/5/15, Long 50/10/20, Deep work 90/20/30) plus your own, and Flowtime: count up, then a break worth a fifth of the time you worked
+- The timer runs from the clock, so it stays right in the background and survives the app closing. Start breaks and next rounds on their own or wait for a tap; long break after a set number of rounds
+- Pause, +5 minutes, finish early with the time kept, skip a break, reset
+- Intention and a linked note for each session ("Focus on this" from any note's menu). Quick notes go to the linked note; distractions are counted and parked thoughts go to a Later note
+- Check-in after each round: intention done, focus and energy from 1 to 5, a note, and an optional summary added to the linked note
+- Breaks with ideas and a guided breathing view (box or 4-7-8). Protect breaks so they can't be skipped. Strict mode marks a round broken if you leave the app
+- Ambient sound mixer (rain, ocean, fireplace, brown, pink and white noise) generated on the device, a chime, vibration and optional ticking
+- Fullscreen timer; turn the phone sideways for a big clock
+- Daily goal ring, streaks, week/month/year totals, a 20-week heatmap, best hours, completion rate, focus and energy trends, time by note, history with edit, past sessions added by hand, and CSV copy
 
 The full feature plan, mood board and screen designs live in Claude artifacts (Note App Feature Plan, the mood board and Life OS App Design).
 
@@ -64,7 +72,7 @@ assets/fonts/ Doto, Inter Tight, Geist Mono (SIL Open Font License)
 ## Roadmap
 
 1. Notes core
-2. Money hub (this build)
-3. Focus: sessions linked to notes and tasks, stats, streaks, ambient sound
+2. Money hub
+3. Focus (this build). Next for Focus: an ongoing notification with controls and a lock screen timer
 4. Tasks and Today, reminders, widgets
 5. Databases and views, sync, collaboration

@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../data/focus_engine.dart';
+import '../../data/focus_models.dart';
 import '../../data/format.dart';
 import '../../data/markdown.dart';
 import '../../data/models.dart';
 import '../../data/store.dart';
 import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
+import '../../shell/root_shell.dart';
 import '../notes/note_widgets.dart';
 import 'glass_menu.dart';
 
@@ -368,7 +371,8 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _openMenu() async {
     FocusScope.of(context).unfocus();
-    final action = await showGlassMenu(context, note: _note);
+    final focused = FocusEngineScope.read(context).store.secondsOnNote(_note.id);
+    final action = await showGlassMenu(context, note: _note, focusLabel: focused >= 60 ? 'Focus on this · ${focusDuration(focused)}' : 'Focus on this');
     if (action == null || !mounted) return;
     switch (action) {
       case GlassAction.pin:
@@ -383,6 +387,10 @@ class _EditorScreenState extends State<EditorScreen> {
         if (mounted) showToast(context, 'Copied as Markdown');
       case GlassAction.find:
         setState(() => _finding = true);
+      case GlassAction.focus:
+        FocusEngineScope.read(context).link(noteId: _note.id);
+        Navigator.pop(context);
+        shellTab.value = 2;
       case GlassAction.move:
         await showMoveSheet(context, _note);
         if (mounted) setState(() {});

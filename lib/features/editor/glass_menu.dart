@@ -4,18 +4,18 @@ import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
 
-enum GlassAction { pin, lock, copy, find, move, image, archive, delete }
+enum GlassAction { pin, lock, copy, find, focus, move, image, archive, delete }
 
 /// The Liquid Glass context menu from the mood board: a row of quick icons,
 /// then labelled actions with their icon on the right.
-Future<GlassAction?> showGlassMenu(BuildContext context, {required Note note}) {
+Future<GlassAction?> showGlassMenu(BuildContext context, {required Note note, String focusLabel = 'Focus on this'}) {
   return showGeneralDialog<GlassAction>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Close menu',
     barrierColor: Colors.black.withValues(alpha: 0.08),
     transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (ctx, _, __) => _GlassMenu(note: note),
+    pageBuilder: (ctx, _, __) => _GlassMenu(note: note, focusLabel: focusLabel),
     transitionBuilder: (ctx, anim, _, child) {
       final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic, reverseCurve: Curves.easeIn);
       return FadeTransition(
@@ -27,9 +27,10 @@ Future<GlassAction?> showGlassMenu(BuildContext context, {required Note note}) {
 }
 
 class _GlassMenu extends StatelessWidget {
-  const _GlassMenu({required this.note});
+  const _GlassMenu({required this.note, required this.focusLabel});
 
   final Note note;
+  final String focusLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +64,7 @@ class _GlassMenu extends StatelessWidget {
                   ]),
                   Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Divider(height: 1, color: c.ink.withValues(alpha: 0.1))),
                   MenuRow(label: 'Find in note', icon: AppIcons.search, onTap: () => pick(GlassAction.find)),
+                  MenuRow(label: focusLabel, icon: AppIcons.focus, onTap: () => pick(GlassAction.focus)),
                   MenuRow(label: 'Move to folder', icon: AppIcons.folder, onTap: () => pick(GlassAction.move)),
                   if (!note.locked) MenuRow(label: 'Insert image', icon: AppIcons.image, onTap: () => pick(GlassAction.image)),
                   MenuRow(label: note.archived ? 'Unarchive' : 'Archive', icon: AppIcons.archive, onTap: () => pick(GlassAction.archive)),
