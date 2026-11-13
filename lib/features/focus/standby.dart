@@ -111,20 +111,22 @@ class _StandByViewState extends State<StandByView> {
                     Expanded(
                       child: _Tile(
                         panel: panel,
-                        child: Row(children: [
-                          SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: CustomPaint(painter: DotRing(progress: goal == 0 ? 0 : mins / goal, on: accent, off: track, dots: 22)),
-                          ),
-                          const SizedBox(width: 10),
+                        child: LayoutBuilder(builder: (context, box) => Row(children: [
+                          if (box.maxWidth > 120) ...[
+                            SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: CustomPaint(painter: DotRing(progress: goal == 0 ? 0 : mins / goal, on: accent, off: track, dots: 22)),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
                               Text('TODAY', style: AppText.label(10, color: muted)),
                               FittedBox(child: Text(focusDuration(mins * 60), style: AppText.dot(22, color: ink))),
                             ]),
                           ),
-                        ]),
+                        ])),
                       ),
                     ),
                     const SizedBox(width: 10),

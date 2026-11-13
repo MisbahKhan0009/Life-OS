@@ -52,7 +52,9 @@ void main() {
   });
 
   testWidgets('home shows the notes title and pinned note', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(400, 900));
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(LifeOsApp(store: store, money: money, focus: focus));
     await tester.pump();
     expect(find.text('Notes'), findsWidgets);
@@ -60,7 +62,9 @@ void main() {
   });
 
   testWidgets('money tab shows the Global deposit and opens the add sheet', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(400, 900));
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(LifeOsApp(store: store, money: money, focus: focus));
     await tester.pump();
     await tester.tap(find.byIcon(AppIcons.money));
@@ -80,7 +84,9 @@ void main() {
   });
 
   testWidgets('focus tab starts and pauses the timer', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(400, 900));
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(LifeOsApp(store: store, money: money, focus: focus));
     await tester.pump();
     await tester.tap(find.byIcon(AppIcons.focus));

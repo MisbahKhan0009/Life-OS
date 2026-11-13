@@ -155,7 +155,9 @@ void main() {
 
   testWidgets('share popup saves into the inbox', (tester) async {
     final inbox = ShareInbox.at(Directory('${dir.path}/popup'));
-    await tester.binding.setSurfaceSize(const Size(400, 900));
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.build(AppColors.light),
       home: ShareSheet(inbox: inbox, shared: (text: 'https://www.facebook.com/reel/42', subject: '')),
