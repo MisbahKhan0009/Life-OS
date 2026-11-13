@@ -131,6 +131,29 @@ class FocusStore extends ChangeNotifier {
   bool get soundsFollowTimer => _get<bool>('soundsFollow', true);
   set soundsFollowTimer(bool v) => _set('soundsFollow', v);
 
+  /// Focus music links (Spotify, YouTube, YouTube Music) as maps {id, name, url}.
+  List<Map<String, String>> get musicSources {
+    final raw = _settings.get('music');
+    if (raw is! List) return const [];
+    return [
+      for (final m in raw)
+        if (m is Map) {for (final e in m.entries) e.key.toString(): e.value.toString()}
+    ];
+  }
+
+  set musicSources(List<Map<String, String>> v) => _set('music', v);
+
+  bool get musicSeeded => _get<bool>('musicSeeded', false);
+  set musicSeeded(bool v) => _settings.put('musicSeeded', v);
+
+  /// The source the Focus music card plays.
+  String? get musicId => _settings.get('musicId') as String?;
+  set musicId(String? v) => _set('musicId', v);
+
+  /// Play when focus starts, pause on pause and breaks.
+  bool get musicFollows => _get<bool>('musicFollows', true);
+  set musicFollows(bool v) => _set('musicFollows', v);
+
   /// Saved engine state so a running timer survives the app closing.
   Map? get engineState => _settings.get('engine') as Map?;
   set engineState(Map? v) => v == null ? _settings.delete('engine') : _settings.put('engine', v);

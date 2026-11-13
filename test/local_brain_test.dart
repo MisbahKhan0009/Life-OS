@@ -8,6 +8,7 @@ import 'package:life_os/data/models.dart';
 import 'package:life_os/data/money_models.dart';
 import 'package:life_os/data/money_store.dart';
 import 'package:life_os/data/store.dart';
+import 'package:life_os/features/focus/focus_music.dart';
 
 void main() {
   late Directory dir;
@@ -95,5 +96,12 @@ void main() {
     a = brain.answer('who won the world cup in 2022');
     expect(a.understood, isFalse);
     expect(a.google, isNotNull);
+  });
+
+  test('music links are recognised', () {
+    expect(musicKindOf('https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ?si=x'), MusicKind.spotify);
+    expect(musicKindOf('https://music.youtube.com/playlist?list=RD'), MusicKind.ytmusic);
+    expect(musicKindOf('https://youtu.be/jfKfPfyJRdk'), MusicKind.youtube);
+    expect(musicKindOf('https://soundcloud.com/x'), MusicKind.link);
   });
 }

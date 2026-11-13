@@ -9,6 +9,7 @@ import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
 import 'focus_dial.dart';
 import 'focus_kit.dart';
+import 'focus_music.dart';
 
 /// Landscape timer in the spirit of iPhone StandBy: a big dial on the left,
 /// glanceable widgets on the right. Night mode turns everything a dim red.
@@ -143,6 +144,16 @@ class _StandByViewState extends State<StandByView> {
                 ),
                 const SizedBox(height: 10),
                 Row(children: [
+                  if (focusMusic?.active ?? false) ...[
+                    _Small(
+                      icon: (focusMusic?.playing ?? false) ? CupertinoIcons.pause_fill : CupertinoIcons.music_note_2,
+                      label: 'Play or pause music',
+                      ink: ink,
+                      panel: panel,
+                      onTap: () => focusMusic?.playPause(),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   if (!e.countsUp && !e.phase.isBreak) ...[
                     _Small(icon: FocusIcons.plusFive, label: 'Add 5 minutes', ink: ink, panel: panel, onTap: e.addFive),
                     const SizedBox(width: 8),

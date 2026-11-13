@@ -14,6 +14,7 @@ import '../../ui/widgets.dart';
 import 'breathing.dart';
 import 'focus_dial.dart';
 import 'focus_kit.dart';
+import 'focus_music.dart';
 import 'focus_sheets.dart';
 import 'focus_stats.dart';
 import 'focus_view.dart';
@@ -176,6 +177,8 @@ class _FocusScreenState extends State<FocusScreen> {
 
                 // Intention and linked note
                 _IntentionPill(engine: e),
+                const SizedBox(height: 10),
+                const MusicCard(),
                 const SizedBox(height: 10),
 
                 if (!onBreak && e.started)

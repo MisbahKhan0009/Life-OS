@@ -80,12 +80,13 @@ String _monthName(DateTime d) => _cap(_months[d.month - 1]);
 String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
 const _stop = {
-  'a', 'an', 'the', 'i', 'me', 'my', 'mine', 'we', 'our', 'you', 'your', 'is', 'are', 'was', 'were', 'be', 'been', 'am', 'do', 'did', 'does', //
-  'have', 'has', 'had', 'what', 'whats', "what's", 'which', 'who', 'where', 'when', 'how', 'why', 'much', 'many', 'any', 'some', 'all', 'of',
-  'on', 'in', 'at', 'to', 'for', 'from', 'about', 'with', 'and', 'or', 'it', 'this', 'that', 'these', 'those', 'there', 'can', 'could', 'would',
-  'should', 'will', 'please', 'tell', 'show', 'give', 'find', 'search', 'look', 'up', 'get', 'list', 'note', 'notes', 'wrote', 'write', 'written',
-  'did', 'so', 'far', 'last', 'past', 'this', 'month', 'week', 'year', 'today', 'yesterday', 'days', 'day', 'time', 'most', 'least', 'than',
-  'more', 'less', 'by', 'into', 'out', 'any', 'anything', 'something', 'thing', 'things', 'again', 'just', 'now', 'right', 'current', 'total',
+  'a', 'an', 'the', 'i', 'me', 'my', 'mine', 'we', 'our', 'you', 'your', 'is', 'are', 'was', 'were', 'be', 'been', 'am', 'do', 'did',
+  'does', 'have', 'has', 'had', 'what', 'whats', "what's", 'which', 'who', 'where', 'when', 'how', 'why', 'much', 'many', 'any', 'some',
+  'all', 'of', 'on', 'in', 'at', 'to', 'for', 'from', 'about', 'with', 'and', 'or', 'it', 'this', 'that', 'these', 'those', 'there', 'can',
+  'could', 'would', 'should', 'will', 'please', 'tell', 'show', 'give', 'find', 'search', 'look', 'up', 'get', 'list', 'note', 'notes',
+  'wrote', 'write', 'written', 'so', 'far', 'last', 'past', 'month', 'week', 'year', 'today', 'yesterday', 'days', 'day', 'time', 'most',
+  'least', 'than', 'more', 'less', 'by', 'into', 'out', 'anything', 'something', 'thing', 'things', 'again', 'just', 'now', 'right',
+  'current', 'total',
 };
 
 /// Words that carry meaning in a question.
