@@ -292,7 +292,7 @@ class MoneyStore extends ChangeNotifier {
 
   /// Spending per day of the month, index 0 is the 1st.
   List<int> dailySpent(DateTime month) {
-    final days = DateUtils.getDaysInMonth(month.year, month.month);
+    final days = daysInMonth(month);
     final out = List<int>.filled(days, 0);
     for (final t in txns(month: month, kind: TxnKind.expense)) {
       out[t.date.day - 1] += t.amount;
@@ -333,7 +333,7 @@ class MoneyStore extends ChangeNotifier {
   int dailyBudget(DateTime month) {
     final budget = monthlyBudget;
     if (budget <= 0) return 0;
-    return budget ~/ DateUtils.getDaysInMonth(month.year, month.month);
+    return budget ~/ daysInMonth(month);
   }
 
   // ---------- goals ----------
@@ -421,6 +421,9 @@ class MoneyStore extends ChangeNotifier {
     }
   }
 }
+
+/// Number of days in the month of [d].
+int daysInMonth(DateTime d) => DateTime(d.year, d.month + 1, 0).day;
 
 /// Makes the money store available below the app root.
 class MoneyScope extends InheritedNotifier<MoneyStore> {

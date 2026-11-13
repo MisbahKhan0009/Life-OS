@@ -22,7 +22,7 @@ class BudgetScreen extends StatelessWidget {
     final budget = store.monthlyBudget;
     final spent = store.spent(now);
     final safe = store.safeToSpendToday();
-    final daysLeft = DateUtils.getDaysInMonth(now.year, now.month) - now.day + 1;
+    final daysLeft = daysInMonth(now) - now.day + 1;
     final cats = store.categories(CategoryKind.expense);
 
     return Scaffold(

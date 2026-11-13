@@ -1,5 +1,5 @@
-/// Taka formatting with South Asian (lakh and crore) digit grouping,
-/// and the little calculator behind the amount keypad.
+// Taka formatting with South Asian (lakh and crore) digit grouping,
+// and the little calculator behind the amount keypad.
 
 const taka = '৳';
 
