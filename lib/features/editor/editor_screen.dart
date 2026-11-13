@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../data/format.dart';
 import '../../data/markdown.dart';
@@ -275,14 +275,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _insertImage({_BlockCtl? after}) async {
     final anchor = after ?? _target;
-    FilePickerResult? picked;
+    Uint8List? bytes;
     try {
-      picked = await FilePicker.pickFiles(type: FileType.image, withData: true);
+      // Large photos are scaled down on the device before they are stored.
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2048, maxHeight: 2048, imageQuality: 85);
+      bytes = await picked?.readAsBytes();
     } catch (_) {
       if (mounted) showToast(context, "Couldn't open your photos. Check the app's permission and try again.");
       return;
     }
-    final Uint8List? bytes = picked?.files.single.bytes;
     if (bytes == null || !mounted) return;
     final id = _store.saveImage(bytes);
     var i = _ctls.indexOf(anchor);
