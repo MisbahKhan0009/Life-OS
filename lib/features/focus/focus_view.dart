@@ -10,6 +10,7 @@ import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
 import 'focus_dial.dart';
 import 'focus_kit.dart';
+import 'standby.dart';
 
 /// Distraction-free fullscreen timer. Turn the phone sideways for a big clock.
 class FocusFullscreen extends StatefulWidget {
@@ -66,6 +67,7 @@ class _FocusFullscreenState extends State<FocusFullscreen> {
         child: SafeArea(
           child: OrientationBuilder(builder: (context, orientation) {
             final landscape = orientation == Orientation.landscape;
+            if (landscape) return StandByView(onExit: () => Navigator.of(context).maybePop());
             final clock = landscape
                 ? FittedBox(
                     fit: BoxFit.contain,

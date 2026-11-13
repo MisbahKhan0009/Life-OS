@@ -2,18 +2,22 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/tokens.dart';
 
 /// A tap target with a gentle press-down scale instead of a ripple.
 class Pressable extends StatefulWidget {
-  const Pressable({super.key, required this.child, this.onTap, this.onLongPress, this.label, this.scale = 0.96});
+  const Pressable({super.key, required this.child, this.onTap, this.onLongPress, this.label, this.scale = 0.96, this.haptic = true});
 
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final String? label;
   final double scale;
+
+  /// A light tick on tap, like iOS controls.
+  final bool haptic;
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -44,15 +48,25 @@ class _PressableState extends State<Pressable> {
         },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
-          onLongPress: widget.onLongPress,
+          onTap: widget.onTap == null
+              ? null
+              : () {
+                  if (widget.haptic) HapticFeedback.selectionClick();
+                  widget.onTap!();
+                },
+          onLongPress: widget.onLongPress == null
+              ? null
+              : () {
+                  HapticFeedback.mediumImpact();
+                  widget.onLongPress!();
+                },
           onTapDown: enabled ? (_) => _set(true) : null,
           onTapUp: enabled ? (_) => _set(false) : null,
           onTapCancel: () => _set(false),
           child: AnimatedScale(
             scale: _down ? widget.scale : 1,
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOut,
+            duration: Duration(milliseconds: _down ? 90 : 260),
+            curve: _down ? Curves.easeOut : Curves.easeOutBack,
             child: widget.child,
           ),
         ),
@@ -338,4 +352,8 @@ class AppIcons {
   static const sun = CupertinoIcons.sun_max;
   static const moon = CupertinoIcons.moon;
   static const check = CupertinoIcons.checkmark;
+  static const edit = CupertinoIcons.pencil;
+  static const ask = CupertinoIcons.sparkles;
+  static const send = CupertinoIcons.arrow_up;
+  static const standby = CupertinoIcons.device_phone_landscape;
 }

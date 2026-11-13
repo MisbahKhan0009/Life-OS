@@ -8,6 +8,7 @@ import '../../shell/root_shell.dart';
 import '../../theme/tokens.dart';
 import '../../ui/grain.dart';
 import '../../ui/widgets.dart';
+import '../assistant/assistant_screen.dart';
 import 'accounts_screen.dart';
 import 'budget_screen.dart';
 import 'goals.dart';
@@ -53,6 +54,8 @@ class MoneyScreen extends StatelessWidget {
                       Text('Money', style: AppText.sans(34, weight: FontWeight.w700, color: p.ink, letterSpacing: -0.9)),
                     ]),
                   ),
+                  AskButton(size: 40, background: p.accent, foreground: p.onAccent),
+                  const SizedBox(width: 8),
                   RoundIconButton(
                     icon: hide ? MoneyIcons.eyeOff : MoneyIcons.eye,
                     label: hide ? 'Show balances' : 'Hide balances',

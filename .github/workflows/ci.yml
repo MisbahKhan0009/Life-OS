@@ -32,6 +32,12 @@ jobs:
       - name: Generate platform folders
         run: flutter create . --project-name life_os --org com.misbahkhan --platforms=android,web
 
+      # Our own platform files (app icon, splash, share target, manifest) go over the generated ones.
+      - name: Apply Life OS platform files
+        run: |
+          cp -R platform/android/. android/
+          cp -R platform/web/. web/
+
       # Android lint's release check crashes inside a plugin (a lint bug, not app code),
       # so release lint is skipped. Dart analysis and tests still gate the build.
       - name: Skip Android release lint

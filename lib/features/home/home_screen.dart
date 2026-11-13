@@ -7,6 +7,7 @@ import '../../shell/root_shell.dart';
 import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
 import '../notes/note_widgets.dart';
+import '../assistant/assistant_screen.dart';
 import '../settings/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -43,6 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Row(children: [
               Expanded(child: Text(headerDate(DateTime.now()), style: AppText.label(11, color: c.muted))),
+              const AskButton(),
+              const SizedBox(width: 8),
               RoundIconButton(
                 icon: AppIcons.settings,
                 label: 'Settings, archive and trash',

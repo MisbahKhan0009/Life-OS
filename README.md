@@ -6,6 +6,12 @@ Built with Flutter for Android, iOS, web, Windows, macOS and Linux.
 
 ## What works in this build
 
+**Everywhere**
+- The Orbit logo: app icon (adaptive and themed on Android), dark splash screen, web icons. Regenerate with `python3 tool/make_logo.py .`
+- Save from any app: share a link or text, pick **Save to Life OS**, and a popup opens over the app you were in. Add a note, pick a folder or make a new one, and you are back where you were. The note shows up in Life OS straight away
+- Ask Life OS: a personal assistant (Google Gemini) that searches your notes, money and focus sessions to answer, and can write notes for you. Paste your own API key in Settings > Assistant; it stays on the device
+- Light taps, springy presses and smoother transitions throughout
+
 **Notes core**
 - Home: search, filters (All, Pinned, Checklists, Images), pinned notes as a stack, recent list
 - Block editor: visual Markdown. Type `#`, `##`, `###`, `-`, `1.`, `[]`, `>`, ```` ``` ```` or `---` at the start of a line and it becomes a heading, list, checklist, quote, code block or divider. Type `/` on an empty line for the block menu
@@ -34,17 +40,20 @@ Built with Flutter for Android, iOS, web, Windows, macOS and Linux.
 - Check-in after each round: intention done, focus and energy from 1 to 5, a note, and an optional summary added to the linked note
 - Breaks with ideas and a guided breathing view (box or 4-7-8). Protect breaks so they can't be skipped. Strict mode marks a round broken if you leave the app
 - Ambient sound mixer (rain, ocean, fireplace, brown, pink and white noise) generated on the device, a chime, vibration and optional ticking
-- Fullscreen timer; turn the phone sideways for a big clock
+- Fullscreen timer, and StandBy: turn the phone sideways (or tap the StandBy button) for a landscape dial with glanceable widgets and a red night mode
+- The + button stays on the Focus tab and opens a quick note
 - Daily goal ring, streaks, week/month/year totals, a 20-week heatmap, best hours, completion rate, focus and energy trends, time by note, history with edit, past sessions added by hand, and CSV copy
 
 The full feature plan, mood board and screen designs live in Claude artifacts (Note App Feature Plan, the mood board and Life OS App Design).
 
 ## Run it
 
-The platform folders (`android/`, `ios/`, `web/` and so on) are not committed. Generate them once:
+The generated platform folders (`android/`, `ios/`, `web/` and so on) are not committed. Generate them once, then copy Life OS's own platform files (icon, splash, share target, manifest) over them:
 
 ```bash
 flutter create . --project-name life_os --org com.misbahkhan
+cp -R platform/android/. android/
+cp -R platform/web/. web/
 flutter pub get
 flutter run
 ```
@@ -63,9 +72,11 @@ To keep one signature across builds (so updates install over the old app and kee
 lib/
   data/       models and Hive stores (notes, money), Markdown, date and taka formatting
   theme/      colour tokens (core and Money), typography, ThemeData
-  ui/         grain texture and gradient art, glass, buttons, sheets
+  ui/         grain texture and gradient art, glass, buttons, sheets, the Orbit logo
   shell/      tabs and the floating glass nav bar
-  features/   home, folders, editor (+ glass menu), settings, focus, money
+  features/   home, folders, editor (+ glass menu), settings, focus, money, assistant, share popup
+platform/     Android and web files copied over the generated ones (icons, splash, share target)
+tool/         logo generator
 assets/fonts/ Doto, Inter Tight, Geist Mono (SIL Open Font License)
 ```
 

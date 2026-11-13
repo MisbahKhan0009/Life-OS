@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../data/store.dart';
 import '../features/editor/editor_screen.dart';
 import '../features/focus/focus_screen.dart';
+import '../features/focus/focus_sheets.dart';
 import '../features/folders/folders_screen.dart';
 import '../features/home/home_screen.dart';
 import '../data/money_models.dart';
+import '../data/share_inbox.dart';
 import '../features/money/money_screen.dart';
 import '../features/money/txn_sheet.dart';
 import '../theme/app_theme.dart';
@@ -48,18 +50,34 @@ class RootShell extends StatefulWidget {
   State<RootShell> createState() => _RootShellState();
 }
 
-class _RootShellState extends State<RootShell> {
+class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
   int get _tab => shellTab.value;
 
   @override
   void initState() {
     super.initState();
     shellTab.addListener(_onTab);
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _importShares());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _importShares();
+  }
+
+  /// Notes saved from the share menu while the app was in the background.
+  void _importShares() {
+    final inbox = shareInbox;
+    if (inbox == null || !mounted) return;
+    final n = inbox.importInto(StoreScope.read(context));
+    if (n > 0) showToast(context, n == 1 ? 'Saved 1 note from share' : 'Saved $n notes from share');
   }
 
   @override
   void dispose() {
     shellTab.removeListener(_onTab);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -76,6 +94,8 @@ class _RootShellState extends State<RootShell> {
   Widget build(BuildContext context) {
     final focusTab = _tab == 2;
     final moneyTab = _tab == 3;
+    // Sideways on Focus is StandBy, which fills the screen.
+    final standby = focusTab && MediaQuery.of(context).orientation == Orientation.landscape;
     return Scaffold(
       body: Stack(
         children: [
@@ -90,6 +110,7 @@ class _RootShellState extends State<RootShell> {
               ],
             ),
           ),
+          if (!standby)
           Positioned(
             left: 0,
             right: 0,
@@ -107,9 +128,10 @@ class _RootShellState extends State<RootShell> {
                       index: _tab,
                       money: moneyTab,
                       onSelect: (i) => shellTab.value = i,
-                      addLabel: moneyTab ? 'Add transaction' : 'New note',
+                      addLabel: moneyTab ? 'Add transaction' : (focusTab ? 'Quick note' : 'New note'),
+                      addIcon: focusTab ? AppIcons.edit : AppIcons.add,
                       onAdd: focusTab
-                          ? null
+                          ? () => showQuickNoteSheet(context)
                           : moneyTab
                               ? () => showTxnSheet(context, kind: TxnKind.expense)
                               : () => createAndOpenNote(context),
@@ -126,13 +148,14 @@ class _RootShellState extends State<RootShell> {
 }
 
 class _NavBar extends StatelessWidget {
-  const _NavBar({required this.index, required this.onSelect, required this.money, this.onAdd, this.addLabel = 'New note'});
+  const _NavBar({required this.index, required this.onSelect, required this.money, this.onAdd, this.addLabel = 'New note', this.addIcon = AppIcons.add});
 
   final int index;
   final bool money;
   final ValueChanged<int> onSelect;
   final VoidCallback? onAdd;
   final String addLabel;
+  final IconData addIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +202,11 @@ class _NavBar extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: c.shadow, blurRadius: 30, offset: const Offset(0, 10))],
               ),
-              child: Icon(AppIcons.add, color: c.isDark ? Colors.white : activeFg, size: 24),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (w, a) => RotationTransition(turns: Tween(begin: 0.75, end: 1.0).animate(a), child: FadeTransition(opacity: a, child: w)),
+                child: Icon(addIcon, key: ValueKey(addIcon), color: c.isDark ? Colors.white : activeFg, size: 24),
+              ),
             ),
           ),
         ],

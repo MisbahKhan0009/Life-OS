@@ -17,6 +17,7 @@ import 'focus_kit.dart';
 import 'focus_sheets.dart';
 import 'focus_stats.dart';
 import 'focus_view.dart';
+import 'standby.dart';
 
 /// Focus: a Pomodoro and Flowtime timer tied to what you are working on.
 class FocusScreen extends StatefulWidget {
@@ -77,6 +78,8 @@ class _FocusScreenState extends State<FocusScreen> {
   @override
   Widget build(BuildContext context) {
     final e = FocusEngineScope.of(context);
+    // Turn the phone sideways on the Focus tab for StandBy.
+    if (MediaQuery.of(context).orientation == Orientation.landscape) return const StandByView();
     final store = e.store;
     final onBreak = e.phase.isBreak;
     final accent = onBreak ? FocusColors.sage : FocusColors.ink;
@@ -118,6 +121,8 @@ class _FocusScreenState extends State<FocusScreen> {
                     ]),
                   ),
                   _HeaderButton(icon: sounds ? FocusIcons.sound : FocusIcons.soundOff, label: 'Sounds', lit: sounds, onTap: () => showSoundSheet(context)),
+                  const SizedBox(width: 8),
+                  _HeaderButton(icon: AppIcons.standby, label: 'StandBy, landscape timer', onTap: () => _push(const StandByScreen())),
                   const SizedBox(width: 8),
                   _HeaderButton(icon: FocusIcons.stats, label: 'Stats', onTap: () => _push(const FocusStatsScreen())),
                   const SizedBox(width: 8),

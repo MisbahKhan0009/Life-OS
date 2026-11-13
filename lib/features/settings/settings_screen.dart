@@ -6,6 +6,8 @@ import '../../data/store.dart';
 import '../../shell/root_shell.dart';
 import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
+import '../../ui/logo.dart';
+import '../assistant/assistant_screen.dart';
 import '../notes/note_widgets.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -70,19 +72,38 @@ class SettingsScreen extends StatelessWidget {
                 count: store.trash.length,
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BinScreen(trash: true))),
               ),
+              const SizedBox(height: 8),
+              _NavRow(
+                icon: AppIcons.ask,
+                label: 'Assistant',
+                count: null,
+                onTap: () async {
+                  final a = await assistantFor(context);
+                  if (context.mounted) showAssistantSettings(context, a);
+                },
+              ),
               const SizedBox(height: 22),
               const SectionLabel('About'),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.m)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const OrbitMark(size: 48, background: Color(0xFF0E0E0F)),
+                    const SizedBox(width: 14),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Life OS', style: AppText.sans(18, weight: FontWeight.w700, color: c.ink)),
+                      Text('Version 0.3 · notes, focus and money', style: AppText.sans(12.5, color: c.muted)),
+                    ]),
+                  ]),
+                  const SizedBox(height: 16),
                   Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
                     Text(twoDigits(store.activeCount), style: AppText.dot(30, color: c.ink)),
                     const SizedBox(width: 8),
                     Text('notes on this device', style: AppText.sans(14, color: c.muted)),
                   ]),
                   const SizedBox(height: 8),
-                  Text('Life OS 0.1. Notes are stored offline on this device. Focus and Money arrive in the next builds.', style: AppText.sans(13, color: c.muted, height: 1.4)),
+                  Text('Everything is stored offline on this device. Only questions you ask the assistant go online, to Google Gemini.', style: AppText.sans(13, color: c.muted, height: 1.4)),
                 ]),
               ),
             ],
@@ -98,7 +119,8 @@ class _NavRow extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final int count;
+  /// Shown on the right; null shows nothing.
+  final int? count;
   final VoidCallback onTap;
 
   @override
@@ -116,7 +138,7 @@ class _NavRow extends StatelessWidget {
           Icon(icon, size: 20, color: c.ink),
           const SizedBox(width: 12),
           Expanded(child: Text(label, style: AppText.sans(15, weight: FontWeight.w600, color: c.ink))),
-          Text(twoDigits(count), style: AppText.dot(16, color: c.muted)),
+          if (count != null) Text(twoDigits(count!), style: AppText.dot(16, color: c.muted)),
           const SizedBox(width: 8),
           Icon(AppIcons.forward, size: 16, color: c.muted),
         ]),
