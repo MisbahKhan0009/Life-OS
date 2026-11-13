@@ -155,7 +155,7 @@ class LocalBrain {
     }
     if (RegExp(r'what can you do|help me use|^help$|how do you work').hasMatch(t)) return _help();
 
-    final create = RegExp(r'^(?:please\s+)?(?:make|create|add|new|write|start|save)\s+(?:me\s+)?(?:a\s+)?(?:new\s+|quick\s+)?note\b[\s:,\-]*(?:about|called|titled|named|for|on|that says|saying)?\s*(.*)$', dotAll: true)
+    final create = RegExp(r'^(?:please\s+)?(?:make|create|add|new|write|start|save)\s+(?:me\s+)?(?:a\s+)?(?:new\s+|quick\s+)?note\b[\s:,\-]*(?:about|called|titled|named|for|on|that says|saying)?\s*(.*)$', caseSensitive: false, dotAll: true)
             .firstMatch(q) ??
         RegExp(r'^(?:note that|remember that|remember to|jot down|note down)\s+(.*)$', caseSensitive: false, dotAll: true).firstMatch(q);
     if (create != null) return _createNote(create.group(1) ?? '');
