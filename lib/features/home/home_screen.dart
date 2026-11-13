@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ]),
             const SizedBox(height: 10),
-            Text('Notes', style: AppText.sans(38, weight: FontWeight.w700, color: c.ink, height: 1, letterSpacing: -1.1)),
+            Text('Notes', style: AppText.display(46, color: c.ink, height: 1)),
             const SizedBox(height: 14),
             _SearchField(controller: _search, onChanged: (_) => setState(() {})),
             const SizedBox(height: 12),

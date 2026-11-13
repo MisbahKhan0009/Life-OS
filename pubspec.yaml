@@ -28,9 +28,11 @@ flutter:
     - family: InterTight
       fonts:
         - asset: assets/fonts/InterTight.ttf
-    - family: Doto
+    - family: InstrumentSerif
       fonts:
-        - asset: assets/fonts/Doto.ttf
+        - asset: assets/fonts/InstrumentSerif.ttf
+        - asset: assets/fonts/InstrumentSerif-Italic.ttf
+          style: italic
     - family: GeistMono
       fonts:
         - asset: assets/fonts/GeistMono.ttf

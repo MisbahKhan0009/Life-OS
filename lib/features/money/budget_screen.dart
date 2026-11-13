@@ -41,7 +41,7 @@ class BudgetScreen extends StatelessWidget {
                       Text(budget > 0 ? 'EDIT' : 'SET', style: AppText.label(10.5, color: p.ink)),
                     ]),
                     const SizedBox(height: 10),
-                    Text(budget > 0 ? money(budget, hidden: hide) : 'No budget yet', style: budget > 0 ? AppText.dot(34, color: p.ink) : AppText.sans(22, weight: FontWeight.w700, color: p.ink)),
+                    Text(budget > 0 ? money(budget, hidden: hide) : 'No budget yet', style: budget > 0 ? AppText.dot(34, color: p.ink) : AppText.display(26, color: p.ink)),
                     const SizedBox(height: 12),
                     if (budget > 0) ...[
                       MoneyBar(value: spent / budget, color: spent > budget ? p.expense : p.accent, height: 8),

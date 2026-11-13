@@ -26,7 +26,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Row(children: [RoundIconButton(icon: AppIcons.back, label: 'Back', onTap: () => Navigator.pop(context))]),
               const SizedBox(height: 16),
-              Text('Settings', style: AppText.sans(34, weight: FontWeight.w700, color: c.ink, letterSpacing: -0.9)),
+              Text('Settings', style: AppText.display(41, color: c.ink)),
               const SizedBox(height: 22),
               const SectionLabel('Appearance'),
               Container(
@@ -192,7 +192,7 @@ class _BinScreenState extends State<BinScreen> {
                   ),
               ]),
               const SizedBox(height: 16),
-              Text(widget.trash ? 'Trash' : 'Archive', style: AppText.sans(34, weight: FontWeight.w700, color: c.ink, letterSpacing: -0.9)),
+              Text(widget.trash ? 'Trash' : 'Archive', style: AppText.display(41, color: c.ink)),
               const SizedBox(height: 6),
               Text(
                 widget.trash ? 'Notes here are deleted for good after ${NoteStore.trashDays} days.' : 'Archived notes are hidden from Notes and search.',

@@ -170,14 +170,27 @@ class AppText {
         letterSpacing: letterSpacing,
       );
 
-  /// Dot-matrix numerals for counters, timers and money (Nothing OS feel).
-  static TextStyle dot(double size, {Color? color, FontWeight weight = FontWeight.w900, double height = 1}) => TextStyle(
-        fontFamily: 'Doto',
-        fontSize: size,
-        fontWeight: weight,
-        fontVariations: _w(weight),
+  /// Numerals for counters, timers and money, set in Instrument Serif.
+  /// [weight] is kept for older call sites; the serif has one weight.
+  static TextStyle dot(double size, {Color? color, FontWeight weight = FontWeight.w400, double height = 1}) => TextStyle(
+        fontFamily: 'InstrumentSerif',
+        fontSize: size * 1.14,
+        fontWeight: FontWeight.w400,
         color: color,
         height: height,
+        letterSpacing: -size * 0.01,
+        fontFeatures: const [FontFeature.liningFigures(), FontFeature.tabularFigures()],
+      );
+
+  /// Editorial serif for page titles and note headings.
+  static TextStyle display(double size, {Color? color, double? height, bool italic = false}) => TextStyle(
+        fontFamily: 'InstrumentSerif',
+        fontSize: size,
+        fontWeight: FontWeight.w400,
+        fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+        color: color,
+        height: height,
+        letterSpacing: -size * 0.005,
       );
 
   /// Uppercase mono labels.

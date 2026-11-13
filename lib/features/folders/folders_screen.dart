@@ -31,7 +31,7 @@ class FoldersScreen extends StatelessWidget {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('${folders.length} ${folders.length == 1 ? 'FOLDER' : 'FOLDERS'} · $total NOTES', style: AppText.label(11, color: c.muted)),
                     const SizedBox(height: 8),
-                    Text('Folders', style: AppText.sans(38, weight: FontWeight.w700, color: c.ink, height: 1, letterSpacing: -1.1)),
+                    Text('Folders', style: AppText.display(46, color: c.ink, height: 1)),
                   ]),
                 ),
                 PillButton(label: 'New folder', icon: AppIcons.add, height: 40, onTap: () => showFolderEditor(context)),
@@ -237,7 +237,7 @@ class FolderScreen extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('${notes.length} ${notes.length == 1 ? 'NOTE' : 'NOTES'}', style: AppText.label(11, color: c.muted)),
                   const SizedBox(height: 6),
-                  Text(folder.name, style: AppText.sans(32, weight: FontWeight.w700, color: c.ink, letterSpacing: -0.8)),
+                  Text(folder.name, style: AppText.display(38, color: c.ink)),
                   if (folder.description.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(folder.description, style: AppText.sans(15, color: c.muted)),

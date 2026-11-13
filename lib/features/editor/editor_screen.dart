@@ -489,8 +489,8 @@ class _EditorScreenState extends State<EditorScreen> {
                           controller: _title,
                           focusNode: _titleNode,
                           readOnly: locked,
-                          style: AppText.sans(30, weight: FontWeight.w700, color: c.ink, height: 1.1, letterSpacing: -0.6),
-                          decoration: InputDecoration.collapsed(hintText: 'Title', hintStyle: AppText.sans(30, weight: FontWeight.w700, color: c.muted.withValues(alpha: 0.5))),
+                          style: AppText.display(36, color: c.ink, height: 1.1),
+                          decoration: InputDecoration.collapsed(hintText: 'Title', hintStyle: AppText.display(36, color: c.muted.withValues(alpha: 0.5), height: 1.1)),
                           maxLines: null,
                           textInputAction: TextInputAction.next,
                           onChanged: (v) {
@@ -580,7 +580,7 @@ class _BlockView extends StatelessWidget {
     }
 
     final style = switch (b.type) {
-      BlockType.heading1 => AppText.sans(25, weight: FontWeight.w700, color: c.ink, height: 1.25, letterSpacing: -0.4),
+      BlockType.heading1 => AppText.display(30, color: c.ink, height: 1.25),
       BlockType.heading2 => AppText.sans(20, weight: FontWeight.w700, color: c.ink, height: 1.3),
       BlockType.heading3 => AppText.sans(17, weight: FontWeight.w600, color: c.ink, height: 1.35),
       BlockType.code => AppText.label(13.5, color: c.ink, tracking: 0).copyWith(height: 1.5),

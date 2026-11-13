@@ -211,7 +211,7 @@ class _Empty extends StatelessWidget {
     return ListView(padding: const EdgeInsets.fromLTRB(20, 30, 20, 20), children: [
       Center(child: OrbitMark(size: 92, background: const Color(0xFF0E0E0F))),
       const SizedBox(height: 22),
-      Text('Your own assistant', textAlign: TextAlign.center, style: AppText.sans(24, weight: FontWeight.w700, color: c.ink, letterSpacing: -0.5)),
+      Text('Your own assistant', textAlign: TextAlign.center, style: AppText.display(29, color: c.ink)),
       const SizedBox(height: 8),
       Text(
         'Ask about anything in Life OS. It looks through your notes, money and focus sessions to answer, and can write notes for you.',

@@ -1,6 +1,6 @@
 # Life OS
 
-Notes, focus and money in one calm, offline-first app. Inspired by Google Keep, Apple Notes and Notion, with a Nothing OS feel: dot-matrix numerals, warm greys, one red action colour, silky grainy gradients and Liquid Glass bars and menus.
+Notes, focus and money in one calm, offline-first app. Inspired by Google Keep, Apple Notes and Notion, with a Nothing OS feel: editorial serif titles and numerals, warm greys, one red action colour, silky grainy gradients and Liquid Glass bars and menus.
 
 Built with Flutter for Android, iOS, web, Windows, macOS and Linux.
 
@@ -77,7 +77,7 @@ lib/
   features/   home, folders, editor (+ glass menu), settings, focus, money, assistant, share popup
 platform/     Android and web files copied over the generated ones (icons, splash, share target)
 tool/         logo generator
-assets/fonts/ Doto, Inter Tight, Geist Mono (SIL Open Font License)
+assets/fonts/ Instrument Serif (titles and numbers), Inter Tight (text), Geist Mono (labels), all SIL Open Font License
 ```
 
 ## Roadmap

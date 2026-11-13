@@ -51,7 +51,7 @@ class MoneyScreen extends StatelessWidget {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(headerDate(now), style: AppText.label(11, color: p.muted)),
                       const SizedBox(height: 4),
-                      Text('Money', style: AppText.sans(34, weight: FontWeight.w700, color: p.ink, letterSpacing: -0.9)),
+                      Text('Money', style: AppText.display(41, color: p.ink)),
                     ]),
                   ),
                   AskButton(size: 40, background: p.accent, foreground: p.onAccent),
