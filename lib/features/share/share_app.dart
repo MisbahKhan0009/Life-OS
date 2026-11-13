@@ -49,6 +49,11 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
   String _subject = '';
   List<({String id, String name, String art})> _folders = const [];
   String? _folderId;
+  List<({String id, String title, String? folderId})> _notes = const [];
+
+  /// The note to add to; null makes a new one.
+  String? _noteId;
+  final _newNote = TextEditingController();
   bool _creating = false;
   bool _saved = false;
   bool _closing = false;
@@ -77,6 +82,13 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
       _text = text;
       _subject = subject;
       _folders = inbox?.readFolders() ?? const [];
+      _notes = inbox?.readNotes() ?? const [];
+      // Start where the last share went, so saving more of the same is one tap.
+      final last = inbox?.readLast();
+      if (last != null && (last.folderId == null || _folders.any((f) => f.id == last.folderId))) {
+        _folderId = last.folderId;
+        if (last.noteId != null && _notes.any((n) => n.id == last.noteId && n.folderId == last.folderId)) _noteId = last.noteId;
+      }
     });
   }
 
@@ -85,6 +97,7 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
     _in.dispose();
     _note.dispose();
     _newFolder.dispose();
+    _newNote.dispose();
     super.dispose();
   }
 
@@ -104,6 +117,7 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
     if (_saved) return;
     HapticFeedback.mediumImpact();
     final newName = _creating ? _newFolder.text.trim() : '';
+    final noteId = newName.isEmpty ? _noteId : null;
     try {
       _inbox?.add(
         text: _text,
@@ -111,7 +125,10 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
         note: _note.text,
         folderId: newName.isEmpty ? _folderId : null,
         newFolder: newName.isEmpty ? null : newName,
+        noteId: noteId,
+        newNoteTitle: noteId == null ? _newNote.text.trim() : null,
       );
+      if (newName.isEmpty) _inbox?.writeLast(folderId: _folderId, noteId: noteId);
     } catch (_) {}
     setState(() => _saved = true);
     await Future<void>.delayed(const Duration(milliseconds: 700));
@@ -182,7 +199,7 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
                               decoration: InputDecoration(
                                 isCollapsed: true,
                                 border: InputBorder.none,
-                                hintText: 'Add a note (optional)',
+                                hintText: _noteId == null ? 'Add a note (optional)' : 'A line above the link (optional)',
                                 hintStyle: AppText.sans(16, color: c.muted),
                               ),
                             ),
@@ -195,6 +212,14 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
                           ]),
                           const SizedBox(height: 10),
                           _creating ? _newFolderField(c) : _folderChips(c),
+                          const SizedBox(height: 16),
+                          Row(children: [
+                            Text('NOTE', style: AppText.label(10.5, color: c.muted)),
+                            const SizedBox(width: 6),
+                            Text(_noteId == null ? 'NEW' : 'ADD TO EXISTING', style: AppText.label(10.5, color: c.muted.withValues(alpha: 0.6))),
+                          ]),
+                          const SizedBox(height: 8),
+                          _noteList(c),
                           const SizedBox(height: 18),
                           Pressable(
                             onTap: _save,
@@ -214,7 +239,7 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
                                         const SizedBox(width: 8),
                                         Text('Saved', style: AppText.sans(16, weight: FontWeight.w600, color: c.inverseInk)),
                                       ])
-                                    : Text('Save', key: const ValueKey('save'), style: AppText.sans(16, weight: FontWeight.w600, color: Colors.white)),
+                                    : Text(_saveLabel(), key: const ValueKey('save'), maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(16, weight: FontWeight.w600, color: Colors.white)),
                               ),
                             ),
                           ),
@@ -235,10 +260,16 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
     return SizedBox(
       height: 38,
       child: ListView(scrollDirection: Axis.horizontal, children: [
-        _Chip(label: 'No folder', selected: _folderId == null, onTap: () => setState(() => _folderId = null)),
+        _Chip(label: 'No folder', selected: _folderId == null, onTap: () => setState(() {
+              _folderId = null;
+              _noteId = null;
+            })),
         for (final f in _folders) ...[
           const SizedBox(width: 8),
-          _Chip(label: f.name, art: f.art, selected: _folderId == f.id, onTap: () => setState(() => _folderId = f.id)),
+          _Chip(label: f.name, art: f.art, selected: _folderId == f.id, onTap: () => setState(() {
+                _folderId = f.id;
+                _noteId = null;
+              })),
         ],
         const SizedBox(width: 8),
         _Chip(
@@ -248,10 +279,85 @@ class _ShareSheetState extends State<ShareSheet> with SingleTickerProviderStateM
           onTap: () => setState(() {
             _creating = true;
             _folderId = null;
+            _noteId = null;
           }),
         ),
       ]),
     );
+  }
+
+  String _saveLabel() {
+    if (_noteId == null || _creating) return 'Save';
+    final t = _notes.where((n) => n.id == _noteId).firstOrNull?.title ?? 'note';
+    return 'Add to $t';
+  }
+
+  /// "New note" plus the notes in the chosen folder, newest first.
+  Widget _noteList(AppColors c) {
+    final inFolder = _creating ? const <({String id, String title, String? folderId})>[] : _notes.where((n) => n.folderId == _folderId).take(40).toList();
+    Widget row({required bool selected, required VoidCallback onTap, required Widget child, IconData? icon}) => Pressable(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          scale: 0.98,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: selected ? c.ink : c.chip.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(Radii.s),
+            ),
+            child: Row(children: [
+              Icon(icon ?? (selected ? AppIcons.check : AppIcons.notes), size: 16, color: selected ? c.inverseInk : c.muted),
+              const SizedBox(width: 10),
+              Expanded(child: child),
+            ]),
+          ),
+        );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      row(
+        selected: _noteId == null,
+        icon: AppIcons.add,
+        onTap: () => setState(() => _noteId = null),
+        child: _noteId == null
+            ? TextField(
+                controller: _newNote,
+                cursorColor: c.action,
+                textCapitalization: TextCapitalization.sentences,
+                style: AppText.sans(15, weight: FontWeight.w500, color: c.inverseInk),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  hintText: 'New note · name it, or leave blank',
+                  hintStyle: AppText.sans(15, color: c.inverseInk.withValues(alpha: 0.6)),
+                ),
+              )
+            : Text('New note', style: AppText.sans(15, weight: FontWeight.w500, color: c.ink)),
+      ),
+      if (inFolder.isNotEmpty)
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 196),
+          child: ListView(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            children: [
+              for (final n in inFolder)
+                row(
+                  selected: _noteId == n.id,
+                  onTap: () => setState(() => _noteId = n.id),
+                  child: Text(n.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.sans(15, weight: FontWeight.w500, color: _noteId == n.id ? c.inverseInk : c.ink)),
+                ),
+            ],
+          ),
+        ),
+    ]);
   }
 
   Widget _newFolderField(AppColors c) {

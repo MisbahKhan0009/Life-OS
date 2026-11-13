@@ -144,8 +144,16 @@ class LinkEnricher {
   /// Queues a note made from a shared link. [autoTitle] is the placeholder title it got.
   static void enqueue(NoteStore store, String noteId, String url, String autoTitle) {
     store.pendingLinks = [
-      ...store.pendingLinks.where((m) => m['noteId'] != noteId),
+      ...store.pendingLinks.where((m) => m['noteId'] != noteId || m['mode'] == 'line'),
       {'noteId': noteId, 'url': url, 'autoTitle': autoTitle, 'tries': 0},
+    ];
+  }
+
+  /// Queues a link added to a collection note: its page title goes on the line above it.
+  static void enqueueLine(NoteStore store, String noteId, String url, String blockId) {
+    store.pendingLinks = [
+      ...store.pendingLinks,
+      {'noteId': noteId, 'url': url, 'blockId': blockId, 'mode': 'line', 'tries': 0},
     ];
   }
 
@@ -171,21 +179,25 @@ class LinkEnricher {
         final url = job['url'] as String;
         final note = store.note(noteId);
         if (note == null || note.inTrash) {
-          _drop(noteId);
+          _drop(job);
           continue;
         }
         final p = await fetchPreview(url, client: client);
         if (p == null) {
           final tries = ((job['tries'] as num?)?.toInt() ?? 0) + 1;
           if (tries >= 5) {
-            _drop(noteId);
+            _drop(job);
           } else {
-            store.pendingLinks = [for (final m in store.pendingLinks) m['noteId'] == noteId ? {...m, 'tries': tries} : m];
+            store.pendingLinks = [for (final m in store.pendingLinks) _same(m, job) ? {...m, 'tries': tries} : m];
           }
           continue;
         }
-        await _apply(note, p, url, job['autoTitle'] as String? ?? '', client);
-        _drop(noteId);
+        if (job['mode'] == 'line') {
+          _applyLine(note, p, url, job['blockId'] as String? ?? '');
+        } else {
+          await _apply(note, p, url, job['autoTitle'] as String? ?? '', client);
+        }
+        _drop(job);
         done++;
       }
     } finally {
@@ -195,7 +207,20 @@ class LinkEnricher {
     return done;
   }
 
-  void _drop(String noteId) => store.pendingLinks = [for (final m in store.pendingLinks) if (m['noteId'] != noteId) m];
+  static bool _same(Map a, Map b) => a['noteId'] == b['noteId'] && a['url'] == b['url'] && a['blockId'] == b['blockId'];
+
+  void _drop(Map job) => store.pendingLinks = [for (final m in store.pendingLinks) if (!_same(m, job)) m];
+
+  /// Puts the page title on the line above a link in a collection note.
+  void _applyLine(Note note, LinkPreview p, String url, String blockId) {
+    final title = titleFrom(p, url);
+    if (title == null) return;
+    final i = note.blocks.indexWhere((b) => b.id == blockId);
+    if (i < 0) return;
+    if (i > 0 && note.blocks[i - 1].text.trim() == title) return;
+    note.blocks.insert(i, Block(text: title));
+    store.touch(note);
+  }
 
   Future<void> _apply(Note note, LinkPreview p, String url, String autoTitle, http.Client client) async {
     var changed = false;

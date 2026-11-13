@@ -48,6 +48,30 @@ void main() {
       expect(hostOf('https://m.facebook.com/x'), 'facebook.com');
     });
 
+    test('a share can be added to an existing note, your line above the link', () {
+      final inbox = ShareInbox.at(Directory('${dir.path}/append'));
+      final folder = notes.createFolder('fb');
+      final baby = notes.createNote(folderId: folder.id, title: 'Baby videos', blocks: [Block(text: 'https://fb.watch/one')]);
+      inbox.add(text: 'https://fb.watch/two', note: 'First steps!', noteId: baby.id);
+      inbox.add(text: 'https://fb.watch/three', noteId: baby.id);
+      expect(inbox.importInto(notes), 2);
+      final n = notes.note(baby.id)!;
+      expect(n.blocks.map((b) => b.text).toList(), ['https://fb.watch/one', 'First steps!', 'https://fb.watch/two', 'https://fb.watch/three']);
+      // The bare link gets its page title fetched for the line above it.
+      expect(notes.pendingLinks.any((m) => m['mode'] == 'line' && m['url'] == 'https://fb.watch/three'), isTrue);
+
+      inbox.add(text: 'https://fb.watch/four', folderId: folder.id, newNoteTitle: 'Cat videos');
+      inbox.importInto(notes);
+      final cats = notes.notes().firstWhere((x) => x.title == 'Cat videos');
+      expect(cats.folderId, folder.id);
+      expect(cats.blocks.last.text, 'https://fb.watch/four');
+
+      inbox.writeSnapshot(notes);
+      expect(inbox.readNotes().where((x) => x.folderId == folder.id).length, 2);
+      inbox.writeLast(folderId: folder.id, noteId: baby.id);
+      expect(inbox.readLast().noteId, baby.id);
+    });
+
     test('shares are imported once, into a new folder when asked', () {
       final inbox = ShareInbox.at(Directory('${dir.path}/inbox'));
       inbox.writeFolders(notes.folders);
@@ -169,7 +193,7 @@ void main() {
     expect(find.text('facebook.com'), findsOneWidget);
     await tester.tap(find.text('New folder'));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.enterText(find.byType(TextField).last, 'Reels');
+    await tester.enterText(find.widgetWithText(TextField, 'Folder name'), 'Reels');
     await tester.tap(find.text('Save'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Saved'), findsOneWidget);
@@ -177,5 +201,27 @@ void main() {
     final files = inbox.dir.listSync().where((f) => f.path.endsWith('.share')).toList();
     expect(files.length, 1);
     expect(File(files.single.path).readAsStringSync(), contains('Reels'));
+  });
+
+  testWidgets('share popup lists the folder\'s notes and adds to one', (tester) async {
+    final inbox = ShareInbox.at(Directory('${dir.path}/popup2'));
+    final folder = notes.createFolder('Videos');
+    final target = notes.createNote(folderId: folder.id, title: 'Funny clips', blocks: [Block(text: 'x')]);
+    inbox.writeSnapshot(notes);
+    inbox.writeLast(folderId: folder.id, noteId: target.id);
+    tester.view.physicalSize = const Size(400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.build(AppColors.light),
+      home: ShareSheet(inbox: inbox, shared: (text: 'https://youtu.be/abc', subject: '')),
+    ));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Funny clips'), findsOneWidget);
+    expect(find.text('Add to Funny clips'), findsOneWidget);
+    await tester.tap(find.text('Add to Funny clips'));
+    await tester.pump(const Duration(seconds: 2));
+    final file = inbox.dir.listSync().firstWhere((f) => f.path.endsWith('.share'));
+    expect(File(file.path).readAsStringSync(), contains(target.id));
   });
 }

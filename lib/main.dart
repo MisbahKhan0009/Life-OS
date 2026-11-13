@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'app.dart';
@@ -24,8 +26,12 @@ Future<void> main() async {
   linkEnricher = LinkEnricher(store)..backfill();
   final inbox = shareInbox;
   if (inbox != null) {
-    inbox.writeFolders(store.folders);
-    store.addListener(() => inbox.writeFolders(store.folders));
+    inbox.writeSnapshot(store);
+    Timer? pending;
+    store.addListener(() {
+      pending?.cancel();
+      pending = Timer(const Duration(milliseconds: 800), () => inbox.writeSnapshot(store));
+    });
   }
   GrainTexture.load();
   runApp(LifeOsApp(store: store, money: money, focus: focus));
