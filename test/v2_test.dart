@@ -97,6 +97,7 @@ void main() {
 
     test('function calling loop: looks up, then answers', () async {
       assistant.apiKey = 'test-key';
+      assistant.mode = 'gemini';
       var calls = 0;
       final client = MockClient((req) async {
         calls++;
@@ -147,6 +148,7 @@ void main() {
 
     test('missing key gives a clear message', () async {
       assistant.apiKey = '';
+      assistant.mode = 'gemini';
       await assistant.send('hello');
       expect(assistant.messages.last.error, isTrue);
       expect(assistant.messages.last.text, contains('API key'));

@@ -48,6 +48,11 @@
             android:value="2" />
     </application>
     <queries>
+        <!-- Opening Google searches and links in the browser. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />

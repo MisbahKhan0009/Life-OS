@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'focus_models.dart';
 import 'focus_store.dart';
+import 'local_brain.dart';
 import 'format.dart';
 import 'markdown.dart';
 import 'models.dart';
@@ -17,8 +18,17 @@ import 'store.dart';
 
 /// One line in the chat.
 class ChatMessage {
-  ChatMessage({required this.role, required this.text, List<ToolNote>? tools, DateTime? at, this.error = false})
-      : tools = tools ?? [],
+  ChatMessage({
+    required this.role,
+    required this.text,
+    List<ToolNote>? tools,
+    DateTime? at,
+    this.error = false,
+    List<Map<String, dynamic>>? cards,
+    this.google,
+    this.source = 'gemini',
+  })  : tools = tools ?? [],
+        cards = cards ?? [],
         at = at ?? DateTime.now();
 
   /// 'user' or 'model'.
@@ -28,6 +38,15 @@ class ChatMessage {
   final DateTime at;
   final bool error;
 
+  /// Notes, transactions or numbers to show under the answer.
+  final List<Map<String, dynamic>> cards;
+
+  /// Offer a Google search for this text.
+  final String? google;
+
+  /// 'device' or 'gemini'.
+  final String source;
+
   bool get isUser => role == 'user';
 
   Map<String, dynamic> toMap() => {
@@ -36,6 +55,9 @@ class ChatMessage {
         'tools': [for (final t in tools) t.toMap()],
         'at': at.millisecondsSinceEpoch,
         'error': error,
+        'cards': cards,
+        if (google != null) 'google': google,
+        'source': source,
       };
 
   factory ChatMessage.fromMap(Map m) => ChatMessage(
@@ -44,6 +66,9 @@ class ChatMessage {
         tools: [for (final t in (m['tools'] as List? ?? const [])) if (t is Map) ToolNote.fromMap(t)],
         at: DateTime.fromMillisecondsSinceEpoch((m['at'] as num?)?.toInt() ?? 0),
         error: (m['error'] as bool?) ?? false,
+        cards: [for (final c in (m['cards'] as List? ?? const [])) if (c is Map) c.cast<String, dynamic>()],
+        google: m['google'] as String?,
+        source: (m['source'] as String?) ?? 'gemini',
       );
 }
 
@@ -100,6 +125,20 @@ class Assistant extends ChangeNotifier {
 
   bool get hasKey => apiKey.isNotEmpty;
 
+  /// 'device' answers on the phone from your data; 'gemini' asks Google Gemini.
+  String get mode => (_box.get('mode') as String?) ?? 'device';
+  set mode(String v) {
+    _box.put('mode', v == 'gemini' ? 'gemini' : 'device');
+    notifyListeners();
+  }
+
+  bool get useGemini => mode == 'gemini';
+
+  /// Keys starting with "AQ." are Vertex AI express keys, which use a different address.
+  bool get isVertexKey => apiKey.startsWith('AQ.');
+
+  late final LocalBrain brain = LocalBrain(notes, money, focus);
+
   String get model => (_box.get('model') as String?) ?? 'gemini-flash-latest';
   set model(String v) {
     _box.put('model', v.trim().isEmpty ? 'gemini-flash-latest' : v.trim());
@@ -127,10 +166,26 @@ class Assistant extends ChangeNotifier {
   // ---------- chat ----------
 
   /// Sends [text] and waits for the reply (with any lookups in between).
-  Future<void> send(String text, {http.Client? client}) async {
+  /// [gemini] overrides the mode for this question. [again] re-asks the last question
+  /// without adding it to the chat a second time.
+  Future<void> send(String text, {http.Client? client, bool? gemini, bool again = false}) async {
     final q = text.trim();
     if (q.isEmpty || busy) return;
-    messages.add(ChatMessage(role: 'user', text: q));
+    if (!again) messages.add(ChatMessage(role: 'user', text: q));
+    if (!(gemini ?? useGemini)) {
+      final a = brain.answer(q);
+      messages.add(ChatMessage(
+        role: 'model',
+        text: a.text,
+        tools: [for (final l in a.looked) ToolNote(l)],
+        cards: a.cards,
+        google: a.understood ? null : (a.google ?? q),
+        source: 'device',
+      ));
+      _persist();
+      notifyListeners();
+      return;
+    }
     busy = true;
     status = 'Thinking';
     _persist();
@@ -208,7 +263,12 @@ class Assistant extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> _call(http.Client client, List<Map<String, dynamic>> contents) async {
-    final uri = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent');
+    final vertex = isVertexKey;
+    // Vertex AI has no "-latest" aliases.
+    final m = vertex && model.endsWith('-latest') ? 'gemini-2.5-flash' : model;
+    final uri = vertex
+        ? Uri.parse('https://aiplatform.googleapis.com/v1/publishers/google/models/$m:generateContent?key=${Uri.encodeQueryComponent(apiKey)}')
+        : Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$m:generateContent');
     final body = jsonEncode({
       'systemInstruction': {
         'parts': [
@@ -224,7 +284,7 @@ class Assistant extends ChangeNotifier {
     final http.Response r;
     try {
       r = await client
-          .post(uri, headers: {'Content-Type': 'application/json', 'X-goog-api-key': apiKey}, body: body)
+          .post(uri, headers: {'Content-Type': 'application/json', if (!vertex) 'X-goog-api-key': apiKey}, body: body)
           .timeout(const Duration(seconds: 60));
     } on TimeoutException {
       throw AssistantException('Gemini took too long to answer. Check your connection and try again.');
@@ -280,9 +340,9 @@ Rules:
 
   static List<Map<String, dynamic>> toolDeclarations({bool canWrite = true}) {
     Map<String, dynamic> obj(Map<String, dynamic> props, [List<String> req = const []]) =>
-        {'type': 'object', 'properties': props, if (req.isNotEmpty) 'required': req};
-    Map<String, dynamic> str(String d) => {'type': 'string', 'description': d};
-    Map<String, dynamic> int_(String d) => {'type': 'integer', 'description': d};
+        {'type': 'OBJECT', 'properties': props, if (req.isNotEmpty) 'required': req};
+    Map<String, dynamic> str(String d) => {'type': 'STRING', 'description': d};
+    Map<String, dynamic> int_(String d) => {'type': 'INTEGER', 'description': d};
     return [
       {
         'name': 'search_notes',
@@ -508,24 +568,7 @@ Rules:
   }
 
   /// Notes ranked by how many search words they contain (title matches count more).
-  List<Note> searchNotes(String query, {String? folderId, int limit = 8}) {
-    final all = notes.notes(folderId: folderId);
-    final words = query.toLowerCase().split(RegExp(r'\s+')).where((w) => w.length > 1).toList();
-    if (words.isEmpty) return all.take(limit).toList();
-    final scored = <(Note, int)>[];
-    for (final x in all) {
-      final title = x.displayTitle.toLowerCase();
-      final text = x.searchText;
-      var score = 0;
-      for (final w in words) {
-        if (title.contains(w)) score += 3;
-        if (text.contains(w)) score += 1;
-      }
-      if (score > 0) scored.add((x, score));
-    }
-    scored.sort((p, q) => q.$2 != p.$2 ? q.$2.compareTo(p.$2) : q.$1.updatedAt.compareTo(p.$1.updatedAt));
-    return [for (final e in scored.take(limit)) e.$1];
-  }
+  List<Note> searchNotes(String query, {String? folderId, int limit = 8}) => rankNotes(notes, keywords(query), folderId: folderId, limit: limit);
 
   static DateTime? _month(String v) {
     final m = RegExp(r'^(\d{4})-(\d{1,2})$').firstMatch(v.trim());

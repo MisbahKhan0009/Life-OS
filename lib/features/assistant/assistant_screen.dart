@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/assistant.dart';
 import '../../data/focus_engine.dart';
@@ -79,8 +80,9 @@ class _AssistantScreenState extends State<AssistantScreen> {
     'What is my Global deposit right now?',
     'Find my notes about the weekly review',
     'How was my focus this week?',
-    'Which note have I focused on the most?',
-    'Make a packing list note for a weekend trip',
+    'Biggest expense last month',
+    'Can I still spend today?',
+    'Make a note: weekend trip, charger, passport, tickets',
   ];
 
   @override
@@ -126,13 +128,32 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final a = _a;
     final t = (text ?? _input.text).trim();
     if (a == null || t.isEmpty || a.busy) return;
-    if (!a.hasKey) {
+    if (a.useGemini && !a.hasKey) {
       showAssistantSettings(context, a);
       return;
     }
     _input.clear();
     a.send(t);
     _toEnd();
+  }
+
+  /// Re-asks [question] with Gemini (from an on-device answer).
+  void _askGemini(String question) {
+    final a = _a;
+    if (a == null || a.busy) return;
+    if (!a.hasKey) {
+      showAssistantSettings(context, a);
+      return;
+    }
+    a.send(question, gemini: true, again: true);
+    _toEnd();
+  }
+
+  String _questionBefore(int i, List<ChatMessage> list) {
+    for (var k = i - 1; k >= 0; k--) {
+      if (list[k].isUser) return list[k].text;
+    }
+    return '';
   }
 
   @override
@@ -162,7 +183,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         child: Text(
-                          a == null ? 'Opening' : (a.busy ? '${a.status}…' : 'Searches your notes, money and focus'),
+                          a == null ? 'Opening' : (a.busy ? '${a.status}…' : (a.useGemini ? 'Gemini, with your notes, money and focus' : 'On this phone, no internet needed')),
                           key: ValueKey(a?.status ?? ''),
                           style: AppText.sans(12.5, color: c.muted),
                         ),
@@ -173,18 +194,34 @@ class _AssistantScreenState extends State<AssistantScreen> {
                     RoundIconButton(icon: AppIcons.settings, label: 'Assistant settings', background: c.chip, foreground: c.ink, onTap: () => showAssistantSettings(context, a)),
                 ]),
               ),
+              if (a != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                  child: _ModeSwitch(
+                    gemini: a.useGemini,
+                    onChanged: (g) {
+                      a.mode = g ? 'gemini' : 'device';
+                      if (g && !a.hasKey) showAssistantSettings(context, a);
+                    },
+                  ),
+                ),
               Expanded(
                 child: a == null
                     ? const SizedBox()
                     : messages.isEmpty
-                        ? _Empty(hasKey: a.hasKey, suggestions: _suggestions, onPick: _send, onSetup: () => showAssistantSettings(context, a))
+                        ? _Empty(hasKey: a.hasKey || !a.useGemini, suggestions: _suggestions, onPick: _send, onSetup: () => showAssistantSettings(context, a))
                         : ListView.builder(
                             controller: _scroll,
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                             itemCount: messages.length + (a.busy ? 1 : 0),
                             itemBuilder: (context, i) {
                               if (i == messages.length) return _Thinking(status: a.status);
-                              return _Bubble(key: ValueKey(messages[i].at.microsecondsSinceEpoch), message: messages[i]);
+                              final m = messages[i];
+                              return _Bubble(
+                                key: ValueKey(m.at.microsecondsSinceEpoch),
+                                message: m,
+                                onGemini: !m.isUser && m.source == 'device' && !a.busy ? () => _askGemini(_questionBefore(i, messages)) : null,
+                              );
                             },
                           ),
               ),
@@ -214,7 +251,7 @@ class _Empty extends StatelessWidget {
       Text('Your own assistant', textAlign: TextAlign.center, style: AppText.display(29, color: c.ink)),
       const SizedBox(height: 8),
       Text(
-        'Ask about anything in Life OS. It looks through your notes, money and focus sessions to answer, and can write notes for you.',
+        'Ask about your notes, money and focus. It answers right on your phone, and sends anything else to Google.',
         textAlign: TextAlign.center,
         style: AppText.sans(14.5, color: c.muted, height: 1.45),
       ),
@@ -256,9 +293,12 @@ class _Empty extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({super.key, required this.message});
+  const _Bubble({super.key, required this.message, this.onGemini});
 
   final ChatMessage message;
+
+  /// Re-ask this question with Gemini.
+  final VoidCallback? onGemini;
 
   @override
   Widget build(BuildContext context) {
@@ -299,15 +339,23 @@ class _Bubble extends StatelessWidget {
                 RichText(
                   text: TextSpan(children: renderMarkdown(m.text, c, error: m.error)),
                 ),
-                const SizedBox(height: 4),
-                Pressable(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: m.text));
-                    showToast(context, 'Copied');
-                  },
-                  label: 'Copy answer',
-                  child: Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Icon(AppIcons.copy, size: 15, color: c.muted)),
-                ),
+                if (m.cards.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _Cards(cards: m.cards),
+                ],
+                const SizedBox(height: 6),
+                Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  if (m.google != null) _ActionPill(icon: CupertinoIcons.globe, label: 'Search Google', strong: true, onTap: () => searchGoogle(context, m.google!)),
+                  if (onGemini != null) _ActionPill(icon: AppIcons.ask, label: 'Ask Gemini', onTap: onGemini!),
+                  Pressable(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: m.text));
+                      showToast(context, 'Copied');
+                    },
+                    label: 'Copy answer',
+                    child: Padding(padding: const EdgeInsets.all(6), child: Icon(AppIcons.copy, size: 15, color: c.muted)),
+                  ),
+                ]),
               ]),
             ),
           ]);
@@ -545,4 +593,184 @@ Future<void> showAssistantSettings(BuildContext context, Assistant a) {
       );
     });
   });
+}
+
+
+/// Opens Google with the question, where Google shows its own AI summary.
+Future<void> searchGoogle(BuildContext context, String query) async {
+  final uri = Uri.https('www.google.com', '/search', {'q': query});
+  var ok = false;
+  try {
+    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {}
+  if (!ok && context.mounted) showToast(context, 'Could not open the browser');
+}
+
+class _ModeSwitch extends StatelessWidget {
+  const _ModeSwitch({required this.gemini, required this.onChanged});
+
+  final bool gemini;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    Widget seg(bool g, IconData icon, String label) {
+      final on = gemini == g;
+      return Expanded(
+        child: Pressable(
+          label: label,
+          onTap: on ? null : () => onChanged(g),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: on ? c.ink : Colors.transparent, borderRadius: BorderRadius.circular(18)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 14, color: on ? c.inverseInk : c.muted),
+              const SizedBox(width: 6),
+              Text(label, style: AppText.sans(13.5, weight: FontWeight.w600, color: on ? c.inverseInk : c.muted)),
+            ]),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: c.chip, borderRadius: BorderRadius.circular(21)),
+      child: Row(children: [
+        seg(false, CupertinoIcons.device_phone_portrait, 'On device'),
+        seg(true, AppIcons.ask, 'Gemini'),
+      ]),
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({required this.icon, required this.label, required this.onTap, this.strong = false});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool strong;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Pressable(
+      onTap: onTap,
+      label: label,
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(color: strong ? c.ink : c.chip, borderRadius: BorderRadius.circular(17)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 14, color: strong ? c.inverseInk : c.ink),
+          const SizedBox(width: 6),
+          Text(label, style: AppText.sans(13, weight: FontWeight.w600, color: strong ? c.inverseInk : c.ink)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Notes, transactions and numbers found for an answer.
+class _Cards extends StatelessWidget {
+  const _Cards({required this.cards});
+  final List<Map<String, dynamic>> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final stats = cards.where((x) => x['type'] == 'stat').toList();
+    final rest = cards.where((x) => x['type'] != 'stat').toList();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (stats.isNotEmpty)
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final st in stats)
+            Container(
+              constraints: const BoxConstraints(minWidth: 96),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.s), border: Border.all(color: c.line)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text('${st['label']}'.toUpperCase(), style: AppText.label(9.5, color: c.muted)),
+                const SizedBox(height: 4),
+                Text('${st['value']}', style: AppText.dot(20, color: c.ink)),
+              ]),
+            ),
+        ]),
+      if (stats.isNotEmpty && rest.isNotEmpty) const SizedBox(height: 8),
+      for (final x in rest)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: x['type'] == 'note' ? _NoteCard(card: x) : _TxnCard(card: x),
+        ),
+    ]);
+  }
+}
+
+class _NoteCard extends StatelessWidget {
+  const _NoteCard({required this.card});
+  final Map<String, dynamic> card;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final id = card['id'] as String?;
+    final exists = id != null && StoreScope.read(context).note(id) != null;
+    return Pressable(
+      onTap: exists ? () => openNote(context, id) : null,
+      scale: 0.98,
+      label: '${card['title']}',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.m), border: Border.all(color: c.line)),
+        child: Row(children: [
+          Icon(AppIcons.notes, size: 18, color: c.muted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${card['title']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(15, weight: FontWeight.w600, color: c.ink)),
+              if ('${card['snippet'] ?? ''}'.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text('${card['snippet']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.sans(13, color: c.muted, height: 1.35)),
+              ],
+              if ('${card['meta'] ?? ''}'.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text('${card['meta']}', style: AppText.sans(11.5, color: c.muted.withValues(alpha: 0.8))),
+              ],
+            ]),
+          ),
+          if (exists) Icon(AppIcons.forward, size: 15, color: c.muted),
+        ]),
+      ),
+    );
+  }
+}
+
+class _TxnCard extends StatelessWidget {
+  const _TxnCard({required this.card});
+  final Map<String, dynamic> card;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final kind = card['kind'];
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.m), border: Border.all(color: c.line)),
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${card['label']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(14.5, weight: FontWeight.w600, color: c.ink)),
+            Text('${card['meta']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.sans(12, color: c.muted)),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        Text('${card['amount']}', style: AppText.sans(14.5, weight: FontWeight.w700, color: kind == 'deposit' ? const Color(0xFF4E7D5B) : c.ink)),
+      ]),
+    );
+  }
 }
